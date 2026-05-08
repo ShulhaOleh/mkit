@@ -66,13 +66,10 @@ fn main() {
 
     match args.get(1).map(String::as_str) {
         Some("update") => {
-            let home_path     = home_path();
-            let dotfiles_path = home_path.join("dotfiles");
-            if let Err(e) = update::run(&dotfiles_path) {
+            if let Err(e) = update::run() {
                 eprintln!("error: {e}");
                 std::process::exit(1);
             }
-            apply(&dotfiles_path, &home_path);
         }
 
         Some("add") => {

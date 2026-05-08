@@ -1,22 +1,50 @@
-use std::path::Path;
+use std::env;
+use std::fs;
 use std::process::Command;
 
-pub fn run(dotfiles_path: &Path) -> Result<(), String> {
-    if !dotfiles_path.exists() {
-        return Err(format!(
-            "{} not found — run mkit <repo-url> first",
-            dotfiles_path.display()
-        ));
-    }
+const REPO: &str = "ShulhaOleh/mkit";
 
-    let status = Command::new("git")
-        .args(["-C", dotfiles_path.to_str().unwrap_or_default(), "pull"])
+pub fn run() -> Result<(), String> {
+    let arch = Command::new("uname")
+        .arg("-m")
+        .output()
+        .map_err(|e| format!("failed to detect arch: {e}"))?;
+
+    let arch = String::from_utf8_lossy(&arch.stdout).trim().to_string();
+
+    let binary = match arch.as_str() {
+        "x86_64" => "mkit-x86_64-linux",
+        other    => return Err(format!("unsupported architecture: {other}")),
+    };
+
+    let url = format!("https://github.com/{REPO}/releases/download/latest/{binary}");
+
+    let current = env::current_exe()
+        .map_err(|e| format!("failed to locate current binary: {e}"))?;
+
+    let tmp = current.with_extension("tmp");
+
+    println!("downloading latest mkit...");
+
+    let status = Command::new("curl")
+        .args(["-fsSL", &url, "-o"])
+        .arg(&tmp)
         .status()
-        .map_err(|e| format!("failed to run git: {e}"))?;
+        .map_err(|e| format!("failed to run curl: {e}"))?;
 
     if !status.success() {
-        return Err(format!("git pull failed with {status}"));
+        return Err("download failed".to_string());
     }
 
+    Command::new("chmod")
+        .args(["+x"])
+        .arg(&tmp)
+        .status()
+        .map_err(|e| format!("chmod failed: {e}"))?;
+
+    fs::rename(&tmp, &current)
+        .map_err(|e| format!("failed to replace binary: {e}"))?;
+
+    println!("mkit updated");
     Ok(())
 }
