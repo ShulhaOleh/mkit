@@ -1,5 +1,6 @@
 mod modules;
 mod install;
+mod setup;
 mod link;
 mod add;
 mod delete;
@@ -41,6 +42,11 @@ fn apply(dotfiles_path: &Path, home_path: &Path) {
     println!("found {} module(s)", modules.len());
 
     if let Err(e) = install::packages(&modules) {
+        eprintln!("error: {e}");
+        std::process::exit(1);
+    }
+
+    if let Err(e) = setup::run(&modules) {
         eprintln!("error: {e}");
         std::process::exit(1);
     }

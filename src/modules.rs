@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 
 pub struct Module {
     pub name: String,
+    pub path: PathBuf,
     pub packages: Vec<String>,
     pub config_files: Vec<PathBuf>,
 }
@@ -39,7 +40,7 @@ pub fn scan(modules_dir: &Path) -> Result<Vec<Module>, std::io::Error> {
             }
         }
 
-        modules.push(Module { name, packages, config_files });
+        modules.push(Module { name, path, packages, config_files });
     }
 
     Ok(modules)
