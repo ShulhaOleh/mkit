@@ -32,11 +32,12 @@ pub fn configs(modules: &[Module], home_dir: &Path) -> Result<(), Vec<String>> {
             let Some(file_name) = src.file_name() else { continue };
             let dest = home_dir.join(file_name);
 
-            if dest.exists() && !dest.symlink_metadata().map(|m| m.file_type().is_symlink()).unwrap_or(false) {
-                if !prompt_conflict(&dest) {
-                    println!("skipped {}", dest.display());
-                    continue;
-                }
+            if dest.exists()
+                && !dest.symlink_metadata().map(|m| m.file_type().is_symlink()).unwrap_or(false)
+                && !prompt_conflict(&dest)
+            {
+                println!("skipped {}", dest.display());
+                continue;
             }
 
             if dest.symlink_metadata().is_ok() {
