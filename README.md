@@ -3,10 +3,18 @@
 Bootstrap your Linux environment from a dotfiles repo.
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/ShulhaOleh/mkit/main/bootstrap.sh | sudo bash
 mkit https://github.com/you/dotfiles
 ```
 
-Clones the repo, installs packages, symlinks configs.
+## Commands
+
+```bash
+mkit <repo-url>          # clone repo, install packages, symlink configs
+mkit update              # pull latest changes and re-apply
+mkit add <file> <module> # start tracking a config file
+mkit delete <file>       # stop tracking a config file
+```
 
 ## Dotfiles structure
 
