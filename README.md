@@ -11,7 +11,7 @@ mkit https://github.com/you/dotfiles
 
 ```bash
 mkit <repo-url>          # clone repo, install packages, symlink configs
-mkit update              # pull latest changes and re-apply
+mkit update              # update mkit to the latest version
 mkit add <file> <module> # start tracking a config file
 mkit delete <file>       # stop tracking a config file
 ```
