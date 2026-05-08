@@ -1,6 +1,14 @@
 use std::process::Command;
 use crate::modules::Module;
 
+fn is_root() -> bool {
+    Command::new("id")
+        .arg("-u")
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim() == "0")
+        .unwrap_or(false)
+}
+
 pub fn packages(modules: &[Module]) -> Result<(), String> {
     let packages: Vec<&str> = modules
         .iter()
@@ -20,12 +28,19 @@ pub fn packages(modules: &[Module]) -> Result<(), String> {
         }
     }
 
-    let status = Command::new("dnf")
-        .arg("install")
-        .arg("-y")
-        .args(&packages)
-        .status()
-        .map_err(|e| format!("failed to run dnf: {e}"))?;
+    let status = if is_root() {
+        Command::new("dnf")
+            .args(["install", "-y"])
+            .args(&packages)
+            .status()
+            .map_err(|e| format!("failed to run dnf: {e}"))?
+    } else {
+        Command::new("sudo")
+            .args(["dnf", "install", "-y"])
+            .args(&packages)
+            .status()
+            .map_err(|e| format!("failed to run sudo dnf: {e}"))?
+    };
 
     if status.success() {
         Ok(())
