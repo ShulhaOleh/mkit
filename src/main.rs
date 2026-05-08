@@ -2,6 +2,7 @@ mod modules;
 mod install;
 mod link;
 mod add;
+mod delete;
 
 use std::env;
 use std::path::PathBuf;
@@ -33,6 +34,17 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     match args.get(1).map(String::as_str) {
+        Some("delete") => {
+            if args.len() < 3 {
+                eprintln!("usage: mkit delete <file>");
+                std::process::exit(1);
+            }
+            if let Err(e) = delete::run(&args[2]) {
+                eprintln!("error: {e}");
+                std::process::exit(1);
+            }
+        }
+
         Some("add") => {
             if args.len() < 4 {
                 eprintln!("usage: mkit add <file> <module>");
@@ -90,6 +102,7 @@ fn main() {
         None => {
             eprintln!("usage: mkit <repo-url>");
             eprintln!("       mkit add <file> <module>");
+            eprintln!("       mkit delete <file>");
             std::process::exit(1);
         }
     }
