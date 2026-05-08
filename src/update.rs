@@ -1,5 +1,6 @@
 use std::env;
 use std::fs;
+use std::path::Path;
 use std::process::Command;
 
 const REPO: &str = "ShulhaOleh/mkit";
@@ -22,13 +23,13 @@ pub fn run() -> Result<(), String> {
     let current = env::current_exe()
         .map_err(|e| format!("failed to locate current binary: {e}"))?;
 
-    let tmp = current.with_extension("tmp");
+    let tmp = Path::new("/tmp/mkit-update");
 
     println!("downloading latest mkit...");
 
     let status = Command::new("curl")
         .args(["-fsSL", &url, "-o"])
-        .arg(&tmp)
+        .arg(tmp)
         .status()
         .map_err(|e| format!("failed to run curl: {e}"))?;
 
@@ -38,12 +39,14 @@ pub fn run() -> Result<(), String> {
 
     Command::new("chmod")
         .args(["+x"])
-        .arg(&tmp)
+        .arg(tmp)
         .status()
         .map_err(|e| format!("chmod failed: {e}"))?;
 
-    fs::rename(&tmp, &current)
-        .map_err(|e| format!("failed to replace binary: {e}"))?;
+    fs::copy(tmp, &current)
+        .map_err(|e| format!("failed to replace binary (try running with sudo): {e}"))?;
+
+    fs::remove_file(tmp).ok();
 
     println!("mkit updated");
     Ok(())
