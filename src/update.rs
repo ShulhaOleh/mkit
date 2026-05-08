@@ -43,8 +43,11 @@ pub fn run() -> Result<(), String> {
         .status()
         .map_err(|e| format!("chmod failed: {e}"))?;
 
+    fs::remove_file(&current)
+        .map_err(|e| format!("failed to remove old binary (try running with sudo): {e}"))?;
+
     fs::copy(tmp, &current)
-        .map_err(|e| format!("failed to replace binary (try running with sudo): {e}"))?;
+        .map_err(|e| format!("failed to write new binary: {e}"))?;
 
     fs::remove_file(tmp).ok();
 
