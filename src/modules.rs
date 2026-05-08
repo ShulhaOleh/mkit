@@ -34,7 +34,7 @@ pub fn scan(modules_dir: &Path) -> Result<Vec<Module>, std::io::Error> {
 
             if file_name == "packages.dnf" {
                 packages = read_packages(&file_path)?;
-            } else if !file_name.starts_with("packages.") {
+            } else if !file_name.starts_with("packages.") && file_name != "install.sh" {
                 config_files.push(file_path);
             }
         }

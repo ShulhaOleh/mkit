@@ -54,6 +54,13 @@ fn apply(dotfiles_path: &Path, home_path: &Path) {
 }
 
 fn home_path() -> PathBuf {
+    // when running under sudo, use the real user's home instead of /root
+    if let Ok(sudo_user) = env::var("SUDO_USER") {
+        let path = PathBuf::from("/home").join(sudo_user);
+        if path.exists() {
+            return path;
+        }
+    }
     let home = env::var("HOME").unwrap_or_else(|_| {
         eprintln!("error: HOME not set");
         std::process::exit(1);
