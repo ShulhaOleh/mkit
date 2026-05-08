@@ -5,6 +5,19 @@ use std::process::Command;
 
 const REPO: &str = "ShulhaOleh/mkit";
 
+fn sha256(path: &Path) -> Option<String> {
+    Command::new("sha256sum")
+        .arg(path)
+        .output()
+        .ok()
+        .and_then(|o| {
+            String::from_utf8_lossy(&o.stdout)
+                .split_whitespace()
+                .next()
+                .map(str::to_string)
+        })
+}
+
 pub fn run() -> Result<(), String> {
     let arch = Command::new("uname")
         .arg("-m")
@@ -37,11 +50,13 @@ pub fn run() -> Result<(), String> {
         return Err("download failed".to_string());
     }
 
-    Command::new("chmod")
-        .args(["+x"])
-        .arg(tmp)
-        .status()
-        .map_err(|e| format!("chmod failed: {e}"))?;
+    if sha256(&current) == sha256(tmp) {
+        fs::remove_file(tmp).ok();
+        println!("already up to date");
+        return Ok(());
+    }
+
+    Command::new("chmod").args(["+x"]).arg(tmp).status().ok();
 
     fs::remove_file(&current)
         .map_err(|e| format!("failed to remove old binary (try running with sudo): {e}"))?;
