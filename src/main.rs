@@ -83,7 +83,10 @@ fn main() {
                 }
             }
 
-            apply::run(&dotfiles, &home);
+            if let Err(e) = apply::run(&dotfiles, &home) {
+                eprintln!("error: {e}");
+                std::process::exit(1);
+            }
         }
 
         Some(unknown) => {

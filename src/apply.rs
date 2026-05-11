@@ -16,37 +16,27 @@ pub fn clone_repo(url: &str, dest: &PathBuf) -> Result<(), String> {
     }
 }
 
-pub fn run(dotfiles_path: &Path, home_path: &Path) {
+pub fn run(dotfiles_path: &Path, home_path: &Path) -> Result<(), String> {
     let modules_path = dotfiles_path.join("modules");
 
     let modules = match modules::scan(&modules_path) {
         Ok(m) if m.is_empty() => {
-            eprintln!("no modules found in {}", modules_path.display());
-            std::process::exit(1);
+            return Err(format!("no modules found in {}", modules_path.display()));
         }
         Ok(m)  => m,
-        Err(e) => {
-            eprintln!("error scanning modules: {e}");
-            std::process::exit(1);
-        }
+        Err(e) => return Err(format!("error scanning modules: {e}")),
     };
 
     println!("found {} module(s)", modules.len());
 
-    if let Err(e) = install::packages(&modules) {
-        eprintln!("error: {e}");
-        std::process::exit(1);
-    }
-
-    if let Err(e) = setup::run(&modules) {
-        eprintln!("error: {e}");
-        std::process::exit(1);
-    }
+    install::packages(&modules)?;
+    setup::run(&modules)?;
 
     if let Err(errors) = link::configs(&modules, home_path) {
         for e in &errors { eprintln!("warning: {e}"); }
-        std::process::exit(1);
+        return Err("linking failed".to_string());
     }
 
     println!("done.");
+    Ok(())
 }
