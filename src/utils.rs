@@ -1,5 +1,6 @@
 use std::env;
 use std::path::PathBuf;
+use std::process::Command;
 
 pub fn home_path() -> PathBuf {
     if let Ok(sudo_user) = env::var("SUDO_USER") {
@@ -13,4 +14,12 @@ pub fn home_path() -> PathBuf {
         std::process::exit(1);
     });
     PathBuf::from(home)
+}
+
+pub fn is_root() -> bool {
+    Command::new("id")
+        .arg("-u")
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim() == "0")
+        .unwrap_or(false)
 }

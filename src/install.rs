@@ -1,13 +1,6 @@
 use std::process::Command;
 use crate::modules::Module;
-
-fn is_root() -> bool {
-    Command::new("id")
-        .arg("-u")
-        .output()
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim() == "0")
-        .unwrap_or(false)
-}
+use crate::utils::is_root;
 
 pub fn packages(modules: &[Module]) -> Result<(), String> {
     let packages: Vec<&str> = modules
