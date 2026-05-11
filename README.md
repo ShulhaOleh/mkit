@@ -11,6 +11,7 @@ mkit https://github.com/you/dotfiles
 
 ```bash
 mkit <repo-url>          # clone repo, install packages, symlink configs
+mkit sync                # re-apply existing dotfiles without a URL
 mkit update              # update mkit to the latest version
 mkit add <file> <module> # start tracking a config file
 mkit delete <file>       # stop tracking a config file
@@ -25,3 +26,5 @@ modules/
     packages.dnf   # one package per line
     install.sh     # optional, runs before symlinking
 ```
+
+Each module can have any combination of `packages.dnf`, `install.sh`, and config files. Config files are symlinked into `$HOME` by filename.
