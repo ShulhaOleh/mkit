@@ -10,6 +10,52 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+struct Cmd {
+    name:  &'static str,
+    usage: &'static str,
+    run:   fn(&[String]) -> Result<(), String>,
+}
+
+const COMMANDS: &[Cmd] = &[
+    Cmd {
+        name:  "update",
+        usage: "mkit update",
+        run:   |_| update::run(),
+    },
+    Cmd {
+        name:  "add",
+        usage: "mkit add <file> <module>",
+        run:   |args| {
+            if args.len() < 2 {
+                return Err("usage: mkit add <file> <module>".to_string());
+            }
+            add::run(&args[0], &args[1], &home_path().join("dotfiles"))
+        },
+    },
+    Cmd {
+        name:  "delete",
+        usage: "mkit delete <file>",
+        run:   |args| {
+            if args.is_empty() {
+                return Err("usage: mkit delete <file>".to_string());
+            }
+            delete::run(&args[0])
+        },
+    },
+];
+
+fn is_repo_url(s: &str) -> bool {
+    s.contains("://") || s.starts_with("git@") || s.starts_with('/') || s.starts_with("./")
+}
+
+fn print_usage() {
+    eprintln!("usage:");
+    eprintln!("  mkit <repo-url>");
+    for cmd in COMMANDS {
+        eprintln!("  {}", cmd.usage);
+    }
+}
+
 fn clone_repo(url: &str, dest: &PathBuf) -> Result<(), String> {
     let status = Command::new("git")
         .args(["clone", "--", url])
@@ -60,7 +106,6 @@ fn apply(dotfiles_path: &Path, home_path: &Path) {
 }
 
 fn home_path() -> PathBuf {
-    // when running under sudo, use the real user's home instead of /root
     if let Ok(sudo_user) = env::var("SUDO_USER") {
         let path = PathBuf::from("/home").join(sudo_user);
         if path.exists() {
@@ -78,37 +123,15 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     match args.get(1).map(String::as_str) {
-        Some("update") => {
-            if let Err(e) = update::run() {
+        Some(name) if COMMANDS.iter().any(|c| c.name == name) => {
+            let cmd = COMMANDS.iter().find(|c| c.name == name).unwrap();
+            if let Err(e) = (cmd.run)(&args[2..]) {
                 eprintln!("error: {e}");
                 std::process::exit(1);
             }
         }
 
-        Some("add") => {
-            if args.len() < 4 {
-                eprintln!("usage: mkit add <file> <module>");
-                std::process::exit(1);
-            }
-            let dotfiles_path = home_path().join("dotfiles");
-            if let Err(e) = add::run(&args[2], &args[3], &dotfiles_path) {
-                eprintln!("error: {e}");
-                std::process::exit(1);
-            }
-        }
-
-        Some("delete") => {
-            if args.len() < 3 {
-                eprintln!("usage: mkit delete <file>");
-                std::process::exit(1);
-            }
-            if let Err(e) = delete::run(&args[2]) {
-                eprintln!("error: {e}");
-                std::process::exit(1);
-            }
-        }
-
-        Some(url) => {
+        Some(url) if is_repo_url(url) => {
             let home_path     = home_path();
             let dotfiles_path = home_path.join("dotfiles");
 
@@ -125,11 +148,14 @@ fn main() {
             apply(&dotfiles_path, &home_path);
         }
 
+        Some(unknown) => {
+            eprintln!("unknown command: {unknown}");
+            print_usage();
+            std::process::exit(1);
+        }
+
         None => {
-            eprintln!("usage: mkit <repo-url>");
-            eprintln!("       mkit add <file> <module>");
-            eprintln!("       mkit delete <file>");
-            eprintln!("       mkit update");
+            print_usage();
             std::process::exit(1);
         }
     }
