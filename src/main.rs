@@ -43,6 +43,21 @@ const COMMANDS: &[Cmd] = &[
             delete::run(&args[0])
         },
     },
+    Cmd {
+        name:  "sync",
+        usage: "mkit sync",
+        run:   |_| {
+            let home     = home_path();
+            let dotfiles = home.join("dotfiles");
+            if !dotfiles.exists() {
+                return Err(format!(
+                    "no dotfiles found at {}, run mkit <repo-url> first",
+                    dotfiles.display()
+                ));
+            }
+            apply::run(&dotfiles, &home)
+        },
+    },
 ];
 
 fn is_repo_url(s: &str) -> bool {
